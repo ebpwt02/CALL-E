@@ -1,1 +1,0 @@
-MONGODB_URI = "mongodb+srv://ebrewer02:MDB$PWandT02@call-e.lfwnmrz.mongodb.net/?retryWrites=true&w=majority"
