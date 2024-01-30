@@ -1,6 +1,8 @@
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import config
+from validation import validate_email, validate_phone, validate_name
+
 
 # MongoDB connection setup
 uri = config.MONGODB_URI
@@ -18,21 +20,28 @@ def add_user(name, email, phone, superuser):
     phone (str): Phone number of the user
     superuser (str): Whether the user is a superuser ("yes" or "no")
     """
-# Check if a user with the given email already exists
-    existing_user = collection.find_one({"email": email})
-    if existing_user:
-        print(f"Error: A user with the email {email} already exists.")
-        return
-    data = {
-        "name": name, 
-        "email": email,
-        "phone": phone,
-        "superuser": superuser
-    }
-    
+# Check if email, name and phone are valid
     try:
+        validate_email(email)
+        validate_phone(phone)
+        validate_name(name)
+
+        # Check if a user with the given email already exists
+        existing_user = collection.find_one({"email": email})
+        if existing_user:
+            print(f"Error: A user with the email {email} already exists.")
+            return
+        data = {
+            "name": name, 
+            "email": email,
+            "phone": phone,
+            "superuser": superuser
+        }
         collection.insert_one(data)
         print(f"User {name} added successfully.")
+    except ValueError as e:
+        print(f"An error occurred: {e}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -55,6 +64,7 @@ def get_user_by_email(email):
 
 
 
+
 def update_user(current_email, new_email=None, name=None, phone=None):
     """
     Function to update user details including email.
@@ -65,31 +75,44 @@ def update_user(current_email, new_email=None, name=None, phone=None):
     name (str, optional): New name of the user.
     phone (str, optional): New phone number of the user.
     """
-    update_data = {}
-    if new_email:
-        # Check if the new email is already in use
-        if collection.find_one({"email": new_email}):
-            print(f"Error: The email {new_email} is already in use.")
-            return
-        update_data['email'] = new_email
-    if name:
-        update_data['name'] = name
-    if phone:
-        update_data['phone'] = phone
-
-    if not update_data:
-        print("No update information provided.")
-        return
-
     try:
+        # Validate current email
+        validate_email(current_email)
+
+        update_data = {}
+        if new_email:
+            # Validate new email and check if it's already in use
+            validate_email(new_email)
+            if collection.find_one({"email": new_email}):
+                print(f"Error: The email {new_email} is already in use.")
+                return
+            update_data['email'] = new_email
+
+        if name:
+            # Validate name
+            validate_name(name)
+            update_data['name'] = name
+
+        if phone:
+            # Validate phone
+            validate_phone(phone)
+            update_data['phone'] = phone
+
+        if not update_data:
+            print("No update information provided.")
+            return
+
         result = collection.update_one({"email": current_email}, {"$set": update_data})
         if result.matched_count > 0:
             print(f"User with email {current_email} updated successfully.")
         else:
             print(f"No user found with current email: {current_email}")
+
+    except ValueError as e:
+        print(f"Validation Error: {e}")
+
     except Exception as e:
         print(f"An error occurred: {e}")
-
 
 def delete_user_by_email(email):
     """
@@ -111,7 +134,7 @@ def delete_user_by_email(email):
 #delete_user_by_email("j.andrew.brewer@gmail.com")
 
 # Example usage Update
-# update_user("j.andrew.brewer@gmail.com", new_email="andrew.brewer@example.com", name="Andrew Brewer", phone="1234567890")
+#update_user("j.andrew.brewer@gmail.com", new_email="andrew.brewer@example.com", name="Andrew Brewer", phone="1234567890")
 
 
 # Example Usage Read
