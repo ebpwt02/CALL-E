@@ -11,7 +11,7 @@ app.config['SECRET_KEY'] = SECRET_KEY
 
 # MongoDB setup
 client = MongoClient(MONGODB_URI)
-db = client.your_database_name  # Replace with your database name
+db = client["CALL-E"]  # Replace with your database name
 users_collection = db.Users  # Assuming a collection named "users"
 
 def token_required(f):
